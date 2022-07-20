@@ -1,1 +1,0 @@
-# isucon11-qualify
