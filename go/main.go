@@ -1085,24 +1085,9 @@ func getTrend(c echo.Context) error {
 	}
 
 	// =============
-	isuCharacterMapList := map[string][]Isu{}
-	hoge := make([]string, 0, len(characterList))
-	for _, c := range characterList {
-		hoge = append(hoge, c.Character)
-	}
-	isuList := []Isu{}
-	sql := "SELECT * FROM `isu` WHERE `character` in (?)"
-	sql, params, err := sqlx.In(sql, hoge)
+	isuCharacterMapList, err := isuNPlus1(c, characterList)
 	if err != nil {
-		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	if err := db.Select(&isuList, sql, params...); err != nil {
-		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	for _, fugafuga := range isuList {
-		isuCharacterMapList[fugafuga.Character] = append(isuCharacterMapList[fugafuga.Character], fugafuga)
+		return err
 	}
 	// =============
 
@@ -1278,4 +1263,27 @@ func bulkinsert01(c echo.Context, tx *sqlx.Tx, req []PostIsuConditionRequest, ji
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	return nil
+}
+
+func isuNPlus1(c echo.Context, characterList []Isu) (map[string][]Isu, error) {
+	isuCharacterMapList := map[string][]Isu{}
+	hoge := make([]string, 0, len(characterList))
+	for _, c := range characterList {
+		hoge = append(hoge, c.Character)
+	}
+	isuList := []Isu{}
+	sql := "SELECT * FROM `isu` WHERE `character` in (?)"
+	sql, params, err := sqlx.In(sql, hoge)
+	if err != nil {
+		c.Logger().Errorf("db error: %v", err)
+		return nil, c.NoContent(http.StatusInternalServerError)
+	}
+	if err := db.Select(&isuList, sql, params...); err != nil {
+		c.Logger().Errorf("db error: %v", err)
+		return nil, c.NoContent(http.StatusInternalServerError)
+	}
+	for _, fugafuga := range isuList {
+		isuCharacterMapList[fugafuga.Character] = append(isuCharacterMapList[fugafuga.Character], fugafuga)
+	}
+	return isuCharacterMapList, nil
 }
