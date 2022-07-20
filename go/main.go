@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -328,6 +329,10 @@ func postInitialize(c echo.Context) error {
 		c.Logger().Errorf("db error : %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+	if err := InitDir("../icons"); err != nil {
+		c.Logger().Errorf("init dir error : %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "go",
@@ -575,8 +580,8 @@ func postIsu(c echo.Context) error {
 	defer tx.Rollback()
 
 	_, err = tx.Exec("INSERT INTO `isu`"+
-		"	(`jia_isu_uuid`, `name`, `image`, `jia_user_id`) VALUES (?, ?, ?, ?)",
-		jiaIsuUUID, isuName, image, jiaUserID)
+		"	(`jia_isu_uuid`, `name`, `jia_user_id`) VALUES (?, ?, ?)",
+		jiaIsuUUID, isuName, jiaUserID)
 	if err != nil {
 		mysqlErr, ok := err.(*mysql.MySQLError)
 
@@ -587,6 +592,11 @@ func postIsu(c echo.Context) error {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+	if err := WriteFile(getIconPath(jiaUserID, jiaIsuUUID), image); err != nil {
+		c.Logger().Error(err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	fmt.Println("========")
 
 	targetURL := getJIAServiceURL(tx) + "/api/activate"
 	body := JIAServiceRequest{postIsuConditionTargetBaseURL, jiaIsuUUID}
@@ -709,8 +719,12 @@ func getIsuIcon(c echo.Context) error {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+	hoge, err := ioutil.ReadFile(getIconPath(jiaUserID, jiaIsuUUID))
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
-	return c.Blob(http.StatusOK, "", image)
+	return c.Blob(http.StatusOK, "", hoge)
 }
 
 // GET /api/isu/:jia_isu_uuid/graph
@@ -1284,4 +1298,28 @@ func isuNPlus1(c echo.Context, characterList []Isu) (map[string][]Isu, error) {
 		isuCharacterMapList[fugafuga.Character] = append(isuCharacterMapList[fugafuga.Character], fugafuga)
 	}
 	return isuCharacterMapList, nil
+}
+func InitDir(p string) error {
+	if err := os.RemoveAll(p); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(p, 0o755); err != nil {
+		return err
+	}
+	return nil
+}
+
+func WriteFile(p string, data []byte) error {
+	dir := path.Dir(p)
+	if err := os.MkdirAll(dir, os.FileMode(0o755)); err != nil && !os.IsExist(err) {
+		return err
+	}
+	if err := os.WriteFile(p, data, os.FileMode(0o755)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getIconPath(a string, b string) string {
+	return fmt.Sprintf("../icons/%s_%s", a, b)
 }
