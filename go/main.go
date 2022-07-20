@@ -1288,14 +1288,3 @@ func isuNPlus1(c echo.Context, characterList []Isu) (map[string][]Isu, error) {
 	}
 	return isuCharacterMapList, nil
 }
-
-func myInit() error {
-	characterList := []Isu{}
-	err := db.Select(&characterList, "SELECT `character` FROM `isu` GROUP BY `character`")
-	if err != nil {
-		return err
-	}
-	for _, i2 := range characterList {
-		characterMaster = append(characterMaster, i2.Character)
-	}
-}
