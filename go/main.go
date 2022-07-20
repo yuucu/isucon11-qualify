@@ -329,6 +329,11 @@ func postInitialize(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	if err := InitDir("../icons"); err != nil {
+		c.Logger().Errorf("init dir error: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "go",
 	})
@@ -575,8 +580,8 @@ func postIsu(c echo.Context) error {
 	defer tx.Rollback()
 
 	_, err = tx.Exec("INSERT INTO `isu`"+
-		"	(`jia_isu_uuid`, `name`, `image`, `jia_user_id`) VALUES (?, ?, ?, ?)",
-		jiaIsuUUID, isuName, image, jiaUserID)
+		"	(`jia_isu_uuid`, `name`, `jia_user_id`) VALUES (?, ?, ?)",
+		jiaIsuUUID, isuName, jiaUserID)
 	if err != nil {
 		mysqlErr, ok := err.(*mysql.MySQLError)
 
@@ -585,6 +590,11 @@ func postIsu(c echo.Context) error {
 		}
 
 		c.Logger().Errorf("db error: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	if err := WriteFile(getIconPath(jiaUserID, jiaIsuUUID), image); err != nil {
+		c.Logger().Error(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -698,19 +708,20 @@ func getIsuIcon(c echo.Context) error {
 
 	jiaIsuUUID := c.Param("jia_isu_uuid")
 
-	var image []byte
-	err = db.Get(&image, "SELECT `image` FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?",
-		jiaUserID, jiaIsuUUID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return c.String(http.StatusNotFound, "not found: isu")
+	/*
+		var image []byte
+		err = db.Get(&image, "SELECT `image` FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?",
+			jiaUserID, jiaIsuUUID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return c.String(http.StatusNotFound, "not found: isu")
+			}
+
+			c.Logger().Errorf("db error: %v", err)
+			return c.NoContent(http.StatusInternalServerError)
 		}
-
-		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	return c.Blob(http.StatusOK, "", image)
+	*/
+	return c.File(getIconPath(jiaUserID, jiaIsuUUID))
 }
 
 // GET /api/isu/:jia_isu_uuid/graph
@@ -1284,4 +1295,25 @@ func isuNPlus1(c echo.Context, characterList []Isu) (map[string][]Isu, error) {
 		isuCharacterMapList[fugafuga.Character] = append(isuCharacterMapList[fugafuga.Character], fugafuga)
 	}
 	return isuCharacterMapList, nil
+}
+
+func InitDir(p string) error {
+	if err := os.RemoveAll(p); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(p, 0o755); err != nil {
+		return err
+	}
+	return nil
+}
+
+func WriteFile(p string, data []byte) error {
+	if err := os.WriteFile(p, data, os.FileMode(0o755)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getIconPath(a string, b string) string {
+	return fmt.Sprintf("../icons/%s_%s", a, b)
 }
