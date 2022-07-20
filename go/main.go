@@ -323,6 +323,11 @@ func postInitialize(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	if err := InitDir("../icons"); err != nil {
+		c.Logger().Errorf("init dir error : %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
 	var images []Isu
 	err = db.Select(&images, "SELECT * FROM `isu`")
 	if err != nil {
@@ -343,10 +348,6 @@ func postInitialize(c echo.Context) error {
 	)
 	if err != nil {
 		c.Logger().Errorf("db error : %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	if err := InitDir("../icons"); err != nil {
-		c.Logger().Errorf("init dir error : %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
