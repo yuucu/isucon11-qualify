@@ -1256,7 +1256,7 @@ func bulkinsert01(c echo.Context, tx *sqlx.Tx, req []PostIsuConditionRequest, ji
 		valueArgs = append(valueArgs, jiaIsuUUID, timestamp, cond.IsSitting, cond.Condition, cond.Message)
 	}
 	smt := fmt.Sprintf("INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`) VALUES %s", strings.Join(valueHatena, ","))
-	_, err := tx.Exec(smt, valueArgs)
+	_, err := tx.Exec(smt, valueArgs...)
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
