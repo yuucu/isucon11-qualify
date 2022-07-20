@@ -1084,9 +1084,15 @@ func calculateConditionLevel(condition string) (string, error) {
 // GET /api/trend
 // ISUの性格毎の最新のコンディション情報
 func getTrend(c echo.Context) error {
+	characterList := []Isu{}
+	err := db.Select(&characterList, "SELECT `character` FROM `isu` GROUP BY `character`")
+	if err != nil {
+		c.Logger().Errorf("db error: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
 	// =============
-	isuCharacterMapList, err := isuNPlus1(c, characterMaster)
+	isuCharacterMapList, err := isuNPlus1(c, characterList)
 	if err != nil {
 		return err
 	}
@@ -1094,8 +1100,8 @@ func getTrend(c echo.Context) error {
 
 	res := []TrendResponse{}
 
-	for _, character := range characterMaster {
-		isuList := isuCharacterMapList[character]
+	for _, character := range characterList {
+		isuList := isuCharacterMapList[character.Character]
 		characterInfoIsuConditions := []*TrendCondition{}
 		characterWarningIsuConditions := []*TrendCondition{}
 		characterCriticalIsuConditions := []*TrendCondition{}
@@ -1144,7 +1150,7 @@ func getTrend(c echo.Context) error {
 		})
 		res = append(res,
 			TrendResponse{
-				Character: character,
+				Character: character.Character,
 				Info:      characterInfoIsuConditions,
 				Warning:   characterWarningIsuConditions,
 				Critical:  characterCriticalIsuConditions,
@@ -1266,11 +1272,11 @@ func bulkinsert01(c echo.Context, tx *sqlx.Tx, req []PostIsuConditionRequest, ji
 	return nil
 }
 
-func isuNPlus1(c echo.Context, characterList []string) (map[string][]Isu, error) {
+func isuNPlus1(c echo.Context, characterList []Isu) (map[string][]Isu, error) {
 	isuCharacterMapList := map[string][]Isu{}
 	hoge := make([]string, 0, len(characterList))
 	for _, c := range characterList {
-		hoge = append(hoge, c)
+		hoge = append(hoge, c.Character)
 	}
 	isuList := []Isu{}
 	sql := "SELECT * FROM `isu` WHERE `character` in (?)"
