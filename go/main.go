@@ -723,30 +723,7 @@ func getIsuIcon(c echo.Context) error {
 	}
 
 	jiaIsuUUID := c.Param("jia_isu_uuid")
-
-	var image []byte
-	err = db.Get(&image, "SELECT image FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?",
-		jiaUserID, jiaIsuUUID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return c.String(http.StatusNotFound, "not found: isu")
-		}
-
-		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	hoge, err := ioutil.ReadFile(getIconPath(jiaUserID, jiaIsuUUID))
-	if err != nil {
-		c.Logger().Errorf("read error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	if string(hoge) != string(image) {
-		fmt.Println(hoge)
-		fmt.Println(image)
-	}
-
-	return c.Blob(http.StatusOK, "", image)
+	return c.File(getIconPath(jiaUserID, jiaIsuUUID))
 }
 
 // GET /api/isu/:jia_isu_uuid/graph
