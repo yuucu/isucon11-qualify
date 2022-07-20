@@ -1252,6 +1252,9 @@ func bulkinsert01(c echo.Context, tx *sqlx.Tx, req []PostIsuConditionRequest, ji
 	valueArgs := make([]interface{}, 0, len(req)*5)
 	for _, cond := range req {
 		timestamp := time.Unix(cond.Timestamp, 0)
+		if !isValidConditionFormat(cond.Condition) {
+			return c.String(http.StatusBadRequest, "bad request body")
+		}
 		valueHatena = append(valueHatena, "(?, ?, ?, ?, ?)")
 		valueArgs = append(valueArgs, jiaIsuUUID, timestamp, cond.IsSitting, cond.Condition, cond.Message)
 	}
