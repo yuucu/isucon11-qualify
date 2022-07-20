@@ -580,8 +580,8 @@ func postIsu(c echo.Context) error {
 	defer tx.Rollback()
 
 	_, err = tx.Exec("INSERT INTO `isu`"+
-		"	(`jia_isu_uuid`, `name`, `jia_user_id`) VALUES (?, ?, ?)",
-		jiaIsuUUID, isuName, jiaUserID)
+		"	(`jia_isu_uuid`, `name`, `image`, `jia_user_id`) VALUES (?, ?, ?, ?)",
+		jiaIsuUUID, isuName, image, jiaUserID)
 	if err != nil {
 		mysqlErr, ok := err.(*mysql.MySQLError)
 
@@ -592,7 +592,7 @@ func postIsu(c echo.Context) error {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-	if err := WriteFile(getIconPath(jiaUserID, jiaIsuUUID), image); err != nil {
+	if err := WriteFile(getIconPath(jiaUserID, jiaIsuUUID), []byte("hoge")); err != nil {
 		c.Logger().Error(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
@@ -719,12 +719,14 @@ func getIsuIcon(c echo.Context) error {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-	hoge, err := ioutil.ReadFile(getIconPath(jiaUserID, jiaIsuUUID))
+	/*
+		hoge, err := ioutil.ReadFile(getIconPath(jiaUserID, jiaIsuUUID))
+	*/
 	if err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	return c.Blob(http.StatusOK, "", hoge)
+	return c.Blob(http.StatusOK, "", image)
 }
 
 // GET /api/isu/:jia_isu_uuid/graph
