@@ -592,7 +592,7 @@ func postIsu(c echo.Context) error {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-	if err := WriteFile(getIconPath(jiaUserID, jiaIsuUUID), []byte("hoge")); err != nil {
+	if err := WriteFile(getIconPath(jiaUserID, jiaIsuUUID), image); err != nil {
 		c.Logger().Error(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
