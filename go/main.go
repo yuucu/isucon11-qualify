@@ -588,6 +588,11 @@ func postIsu(c echo.Context) error {
 		}
 	}
 
+	if err := WriteFile(getIconPath(jiaUserID, jiaIsuUUID), image); err != nil {
+		c.Logger().Error(err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
 	tx, err := db.Beginx()
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
@@ -606,10 +611,6 @@ func postIsu(c echo.Context) error {
 		}
 
 		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	if err := WriteFile(getIconPath(jiaUserID, jiaIsuUUID), image); err != nil {
-		c.Logger().Error(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -734,11 +735,13 @@ func getIsuIcon(c echo.Context) error {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-	_, err = ioutil.ReadFile(getIconPath(jiaUserID, jiaIsuUUID))
-	if err != nil {
-		c.Logger().Errorf("read error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
+	/*
+		_, err = ioutil.ReadFile(getIconPath(jiaUserID, jiaIsuUUID))
+		if err != nil {
+			c.Logger().Errorf("read error: %v", err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
+	*/
 
 	return c.Blob(http.StatusOK, "", image)
 }
