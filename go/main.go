@@ -1084,19 +1084,32 @@ func getTrend(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	// =============
+	isuCharacterMapList := map[string][]Isu{}
+	hoge := make([]string, 0, len(characterList))
+	for _, c := range characterList {
+		hoge = append(hoge, c.Character)
+	}
+	isuList := []Isu{}
+	sql := "SELECT * FROM `isu` WHERE `character` in (?)"
+	sql, params, err := sqlx.In(sql, hoge)
+	if err != nil {
+		c.Logger().Errorf("db error: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	if err := db.Select(&isuList, sql, params...); err != nil {
+		c.Logger().Errorf("db error: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	for _, fugafuga := range isuList {
+		isuCharacterMapList[fugafuga.Character] = append(isuCharacterMapList[fugafuga.Character], fugafuga)
+	}
+	// =============
+
 	res := []TrendResponse{}
 
 	for _, character := range characterList {
-		isuList := []Isu{}
-		err = db.Select(&isuList,
-			"SELECT * FROM `isu` WHERE `character` = ?",
-			character.Character,
-		)
-		if err != nil {
-			c.Logger().Errorf("db error: %v", err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
-
+		isuList := isuCharacterMapList[character.Character]
 		characterInfoIsuConditions := []*TrendCondition{}
 		characterWarningIsuConditions := []*TrendCondition{}
 		characterCriticalIsuConditions := []*TrendCondition{}
