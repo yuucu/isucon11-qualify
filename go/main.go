@@ -746,7 +746,7 @@ func getIsuIcon(c echo.Context) error {
 		fmt.Println(image)
 	}
 
-	return c.Blob(http.StatusOK, "", hoge)
+	return c.Blob(http.StatusOK, "", image)
 }
 
 // GET /api/isu/:jia_isu_uuid/graph
