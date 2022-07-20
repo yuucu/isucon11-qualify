@@ -332,6 +332,12 @@ func postInitialize(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	err = myInit()
+	if err != nil {
+		c.Logger().Errorf("db error : %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "go",
 	})
@@ -1298,4 +1304,5 @@ func myInit() error {
 	for _, i2 := range characterList {
 		characterMaster = append(characterMaster, i2.Character)
 	}
+	return nil
 }
