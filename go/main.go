@@ -735,15 +735,14 @@ func getIsuIcon(c echo.Context) error {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-	/*
-		_, err = ioutil.ReadFile(getIconPath(jiaUserID, jiaIsuUUID))
-		if err != nil {
-			c.Logger().Errorf("read error: %v", err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
-	*/
 
-	return c.Blob(http.StatusOK, "", image)
+	hoge, err := ioutil.ReadFile(getIconPath(jiaUserID, jiaIsuUUID))
+	if err != nil {
+		c.Logger().Errorf("read error: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.Blob(http.StatusOK, "", hoge)
 }
 
 // GET /api/isu/:jia_isu_uuid/graph
