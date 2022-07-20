@@ -721,7 +721,12 @@ func getIsuIcon(c echo.Context) error {
 	}
 
 	jiaIsuUUID := c.Param("jia_isu_uuid")
-	return c.File(getIconPath(jiaUserID, jiaIsuUUID))
+	hoge, err := ioutil.ReadFile(getIconPath(jiaUserID, jiaIsuUUID))
+	if err != nil {
+		c.Logger().Error(err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	return c.Blob(http.StatusOK, "", hoge)
 }
 
 // GET /api/isu/:jia_isu_uuid/graph
