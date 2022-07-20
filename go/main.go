@@ -721,7 +721,7 @@ func getIsuIcon(c echo.Context) error {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-	// hoge, err := ioutil.ReadFile(getIconPath(jiaUserID, jiaIsuUUID))
+	_, err = ioutil.ReadFile(getIconPath(jiaUserID, jiaIsuUUID))
 	if err != nil {
 		c.Logger().Errorf("read error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
