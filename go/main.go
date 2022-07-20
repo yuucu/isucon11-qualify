@@ -741,6 +741,10 @@ func getIsuIcon(c echo.Context) error {
 		c.Logger().Errorf("read error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+	if string(hoge) != string(image) {
+		fmt.Println(hoge)
+		fmt.Println(image)
+	}
 
 	return c.Blob(http.StatusOK, "", hoge)
 }
