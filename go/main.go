@@ -1248,22 +1248,18 @@ func getIndex(c echo.Context) error {
 }
 
 func bulkinsert01(c echo.Context, tx *sqlx.Tx, req []PostIsuConditionRequest, jiaIsuUUID string) error {
+	valueHatena := []string{}
+	valueArgs := make([]interface{}, 0, len(req)*5)
 	for _, cond := range req {
 		timestamp := time.Unix(cond.Timestamp, 0)
-
-		if !isValidConditionFormat(cond.Condition) {
-			return c.String(http.StatusBadRequest, "bad request body")
-		}
-
-		_, err := tx.Exec(
-			"INSERT INTO `isu_condition`"+
-				"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)"+
-				"	VALUES (?, ?, ?, ?, ?)",
-			jiaIsuUUID, timestamp, cond.IsSitting, cond.Condition, cond.Message)
-		if err != nil {
-			c.Logger().Errorf("db error: %v", err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
+		valueHatena = append(valueHatena, "(?, ?, ?, ?)")
+		valueArgs = append(valueArgs, jiaIsuUUID, timestamp, cond.IsSitting, cond.Condition, cond.Message)
+	}
+	smt := fmt.Sprintf("INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`) VALUES %s", strings.Join(valueHatena, ","))
+	_, err := tx.Exec(smt, valueArgs)
+	if err != nil {
+		c.Logger().Errorf("db error: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 	return nil
 }
